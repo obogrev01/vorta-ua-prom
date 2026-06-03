@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vorta UA — Картки товарів, що вихором заповнюють Prom та Rozetka</title>
+<meta name="description" content="AI генерує повну картку товару українською з будь-якого сайту і сам заповнює форму на Prom.ua або Rozetka. Назва, опис, SEO, характеристики — все за 10 секунд.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #07090E;
+  --s1:    #0D1018;
+  --s2:    #131720;
+  --s3:    #1A202C;
+  --acc:   #00D4FF;
+  --acc2:  #0099CC;
+  --gold:  #FFB547;
+  --green: #00E5A0;
+  --red:   #FF4D6A;
+  --text:  #EDF2F7;
+  --muted: #718096;
+  --border:#1E2733;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;font-size:15px;overflow-x:hidden}
+
+/* NOISE OVERLAY */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04);backdrop-filter:blur(20px);background:rgba(7,9,14,.8)}
+.nav-logo{font-family:'Unbounded',sans-serif;font-weight:900;font-size:18px;letter-spacing:2px;color:var(--text)}
+.nav-logo span{color:var(--acc)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;letter-spacing:.5px;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{background:var(--acc);color:#000;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.5px;transition:all .2s}
+.nav-cta:hover{background:#1AE0FF;box-shadow:0 0 20px rgba(0,212,255,.4);color:#000}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 20px 80px;position:relative;overflow:hidden}
+
+/* Vortex background */
+.hero::after{content:'';position:absolute;width:800px;height:800px;border-radius:50%;background:conic-gradient(from 0deg, transparent 0%, rgba(0,212,255,.06) 20%, transparent 40%, rgba(0,153,204,.04) 60%, transparent 80%);animation:vortex 20s linear infinite;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+@keyframes vortex{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--acc);letter-spacing:1px;text-transform:uppercase;margin-bottom:32px;position:relative;z-index:1}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--acc);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+
+h1{font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(36px,6vw,72px);line-height:1.1;letter-spacing:-1px;position:relative;z-index:1;max-width:900px}
+h1 .acc{color:var(--acc)}
+h1 .gold{color:var(--gold)}
+
+.hero-sub{font-size:clamp(15px,2vw,19px);color:var(--muted);max-width:620px;line-height:1.7;margin:24px auto 0;position:relative;z-index:1}
+.hero-sub strong{color:var(--text)}
+
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:40px;position:relative;z-index:1}
+.btn-primary{background:var(--acc);color:#000;padding:15px 32px;border-radius:10px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;letter-spacing:.5px;text-decoration:none;transition:all .25s;display:flex;align-items:center;gap:8px}
+.btn-primary:hover{background:#1AE0FF;box-shadow:0 0 40px rgba(0,212,255,.5);transform:translateY(-2px)}
+.btn-secondary{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:15px 32px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s}
+.btn-secondary:hover{border-color:var(--acc);color:var(--acc)}
+
+.hero-stats{display:flex;gap:40px;justify-content:center;margin-top:60px;position:relative;z-index:1;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-num{font-family:'Unbounded',sans-serif;font-size:32px;font-weight:900;color:var(--acc)}
+.stat-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:4px}
+
+/* HOW IT WORKS */
+section{padding:80px 40px;max-width:1100px;margin:0 auto}
+.section-label{font-size:11px;font-weight:700;color:var(--acc);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+h2{font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(26px,4vw,42px);letter-spacing:-0.5px;line-height:1.15;margin-bottom:48px}
+h2 span{color:var(--acc)}
+
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
+.step{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:28px;position:relative;overflow:hidden;transition:border-color .2s}
+.step:hover{border-color:rgba(0,212,255,.3)}
+.step::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--acc),transparent)}
+.step-num{font-family:'Unbounded',sans-serif;font-size:40px;font-weight:900;color:rgba(0,212,255,.1);position:absolute;top:20px;right:20px;line-height:1}
+.step-icon{font-size:28px;margin-bottom:16px}
+.step h3{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px;letter-spacing:.3px}
+.step p{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* SOURCES */
+.sources-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.source-chip{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--muted);transition:all .2s}
+.source-chip:hover{border-color:var(--acc);color:var(--text)}
+.source-chip.highlight{border-color:rgba(0,212,255,.3);color:var(--acc);background:rgba(0,212,255,.05)}
+
+/* PRICING */
+.pricing-section{padding:80px 40px;background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.pricing-inner{max-width:900px;margin:0 auto;text-align:center}
+.pricing-toggle{display:inline-flex;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:40px;gap:4px}
+.toggle-btn{padding:8px 20px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:'Manrope',sans-serif}
+.toggle-btn.active{background:var(--acc);color:#000}
+
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;text-align:left}
+.plan{background:var(--s2);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;transition:all .2s}
+.plan:hover{border-color:rgba(0,212,255,.3);transform:translateY(-2px)}
+.plan.featured{border-color:var(--acc);background:rgba(0,212,255,.04)}
+.plan-badge{position:absolute;top:-10px;right:16px;background:var(--acc);color:#000;font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase}
+.plan-name{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.plan-price{font-family:'Unbounded',sans-serif;font-size:32px;font-weight:900;color:var(--text);line-height:1}
+.plan-price sup{font-size:16px;color:var(--muted)}
+.plan-price sub{font-size:13px;color:var(--muted);font-weight:400;font-family:'Manrope',sans-serif}
+.plan-uah{font-size:12px;color:var(--green);margin-top:4px;font-weight:600}
+.plan-divider{height:1px;background:var(--border);margin:16px 0}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:8px}
+.plan-features li{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.plan-features li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+.plan-features li.no{color:rgba(255,255,255,.2)}
+.plan-features li.no::before{content:'×';color:rgba(255,255,255,.2)}
+.plan-btn{display:block;width:100%;margin-top:20px;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;transition:all .2s;letter-spacing:.3px;font-family:'Unbounded',sans-serif}
+.plan-btn:hover{border-color:var(--acc);color:var(--acc)}
+.plan.featured .plan-btn{background:var(--acc);color:#000;border-color:var(--acc)}
+.plan.featured .plan-btn:hover{background:#1AE0FF}
+
+/* REFERRAL */
+.referral-section{padding:80px 40px}
+.referral-inner{max-width:800px;margin:0 auto}
+.referral-card{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(255,181,71,.04));border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:40px;text-align:center}
+.referral-percent{font-family:'Unbounded',sans-serif;font-size:72px;font-weight:900;color:var(--acc);line-height:1}
+.referral-sub{font-size:18px;font-weight:600;color:var(--text);margin-top:8px}
+.referral-desc{font-size:14px;color:var(--muted);max-width:500px;margin:16px auto 0;line-height:1.7}
+.referral-platforms{display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+.platform-pill{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:500;color:var(--text)}
+.how-works{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:32px;text-align:left}
+.hw-step{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:18px}
+.hw-num{font-family:'Unbounded',sans-serif;font-size:24px;font-weight:900;color:rgba(0,212,255,.3);margin-bottom:8px}
+.hw-text{font-size:13px;color:var(--muted);line-height:1.5}
+.hw-text strong{color:var(--text)}
+
+/* COMPARISON */
+.compare-table{width:100%;border-collapse:collapse;margin-top:32px}
+.compare-table th{background:var(--s2);padding:14px 20px;text-align:left;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border)}
+.compare-table th:first-child{border-radius:12px 0 0 0}
+.compare-table th:last-child{border-radius:0 12px 0 0}
+.compare-table td{padding:14px 20px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04)}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table tr:hover td{background:rgba(255,255,255,.02)}
+.check{color:var(--green);font-size:16px}
+.cross{color:rgba(255,255,255,.2);font-size:16px}
+.highlight-col{background:rgba(0,212,255,.04);font-weight:600;color:var(--text)}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:12px;margin-top:32px}
+.faq-item{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.faq-q{padding:18px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.faq-q:hover{color:var(--acc)}
+.faq-a{padding:0 20px 18px;font-size:13px;color:var(--muted);line-height:1.7;display:none}
+.faq-item.open .faq-a{display:block}
+.faq-item.open .faq-arrow{transform:rotate(180deg)}
+.faq-arrow{transition:transform .2s;font-size:12px;color:var(--muted)}
+
+/* CTA */
+.cta-section{padding:80px 40px;text-align:center}
+.cta-inner{max-width:600px;margin:0 auto}
+.cta-section h2{margin-bottom:16px}
+.cta-section p{color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:32px}
+
+/* FOOTER */
+footer{padding:40px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-logo{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;letter-spacing:2px}
+.footer-logo span{color:var(--acc)}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap}
+.footer-links a{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--text)}
+
+/* ANIMATIONS */
+.fade-in{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+  nav{padding:12px 20px}
+  .nav-links{display:none}
+  section{padding:60px 20px}
+  .pricing-section,.referral-section,.cta-section{padding:60px 20px}
+  footer{padding:30px 20px;flex-direction:column;text-align:center}
+  .hero-stats{gap:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">VORT<span>A</span> 🇺🇦</div>
+  <div class="nav-links">
+    <a href="#how">Як працює</a>
+    <a href="#pricing">Тарифи</a>
+    <a href="#referral">Реферали</a>
+    <a href="#faq">FAQ</a>
+    <a href="#install" class="nav-cta">Встановити →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🌀 AI-вихор для вашого маркетплейсу</div>
+  <h1>Картки товарів,<br>що <span class="acc">вихором</span><br>заповнюють <span class="gold">Prom & Rozetka</span></h1>
+  <p class="hero-sub">
+    Знайшли товар на Amazon або AliExpress?<br>
+    <strong>Vorta AI</strong> згенерує повну картку українською і <strong>сам заповнить форму</strong> — назва, опис, SEO, характеристики, габарити.
+  </p>
+  <div class="hero-btns">
+    <a href="#install" class="btn-primary">🌀 Встановити безкоштовно</a>
+    <a href="#how" class="btn-secondary">Як це працює?</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">10 сек</div><div class="stat-label">на одну картку</div></div>
+    <div class="stat"><div class="stat-num">≈3 грн</div><div class="stat-label">ціна картки</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">безкоштовно на старті</div></div>
+    <div class="stat"><div class="stat-num">-30%</div><div class="stat-label">за репост у соцмережах</div></div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="fade-in">
+  <div class="section-label">Як це працює</div>
+  <h2>Чотири кроки — і картка <span>готова</span></h2>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-icon">🔍</div><h3>Знайди товар</h3><p>Відкрий будь-яку сторінку товару — Amazon, AliExpress, eBay, Temu, OLX або будь-який інший сайт.</p></div>
+    <div class="step"><div class="step-num">2</div><div class="step-icon">🌀</div><h3>Запусти Vorta</h3><p>Натисни іконку розширення, обери платформу (Prom або Rozetka) і натисни «Згенерувати».</p></div>
+    <div class="step"><div class="step-num">3</div><div class="step-icon">⚡</div><h3>AI генерує</h3><p>Claude AI створює назву, опис, SEO-теги, характеристики та габарити — все українською за 10 секунд.</p></div>
+    <div class="step"><div class="step-num">4</div><div class="step-icon">✅</div><h3>Форма заповнена</h3><p>Натисни «Автозаповнити» — Vorta сам відкриє форму на Prom.ua і заповнить усі поля. Тобі лишається перевірити і зберегти.</p></div>
+  </div>
+</section>
+
+<!-- SOURCES -->
+<section class="fade-in" style="padding-top:0">
+  <div class="section-label">Джерела</div>
+  <h2>Працює з <span>будь-яким сайтом</span></h2>
+  <div class="sources-grid">
+    <div class="source-chip highlight">📦 Amazon</div>
+    <div class="source-chip highlight">🟠 AliExpress</div>
+    <div class="source-chip highlight">🔵 eBay</div>
+    <div class="source-chip">🛒 Temu</div>
+    <div class="source-chip">🇵🇱 Allegro</div>
+    <div class="source-chip">🏪 OLX</div>
+    <div class="source-chip">🟢 Rozetka</div>
+    <div class="source-chip">🟡 Prom.ua</div>
+    <div class="source-chip">👗 Kasta</div>
+    <div class="source-chip">👘 Shafa</div>
+    <div class="source-chip">🏠 Epicentr</div>
+    <div class="source-chip">📱 Allo</div>
+    <div class="source-chip highlight">🌐 + будь-який інший сайт</div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<div class="pricing-section" id="pricing">
+  <div class="pricing-inner fade-in">
+    <div class="section-label">Тарифи</div>
+    <h2>Платиш тільки за те,<br>що <span>реально генеруєш</span></h2>
+    <p style="color:var(--muted);margin-bottom:36px;font-size:14px">Без щомісячних підписок. Поповнив баланс — використовуєш коли треба.</p>
+
+    <div class="plans">
+      <div class="plan">
+        <div class="plan-name">Prom.ua</div>
+        <div class="plan-price"><sup>$</sup>0.08<sub>/картка</sub></div>
+        <div class="plan-uah">≈ 3 грн/картка</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Назва + опис українською</li>
+          <li>SEO-теги та keywords</li>
+          <li>Характеристики і габарити</li>
+          <li>Автозаповнення Prom.ua</li>
+          <li class="no">Rozetka</li>
+          <li class="no">Пости для соцмереж</li>
+        </ul>
+        <a href="#install" class="plan-btn">Почати</a>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">Rozetka</div>
+        <div class="plan-price"><sup>$</sup>0.12<sub>/картка</sub></div>
+        <div class="plan-uah">≈ 5 грн/картка</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Назва + опис українською</li>
+          <li>SEO-теги та keywords</li>
+          <li>Характеристики і габарити</li>
+          <li>Автозаповнення Rozetka</li>
+          <li class="no">Prom.ua</li>
+          <li class="no">Пости для соцмереж</li>
+        </ul>
+        <a href="#install" class="plan-btn">Почати</a>
+      </div>
+
+      <div class="plan featured">
+        <div class="plan-badge">НАЙПОПУЛЯРНІШИЙ</div>
+        <div class="plan-name">Обидві + Соцмережі</div>
+        <div class="plan-price"><sup>$</sup>0.15<sub>/картка</sub></div>
+        <div class="plan-uah">≈ 6 грн/картка</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Назва + опис українською</li>
+          <li>SEO-теги та keywords</li>
+          <li>Характеристики і габарити</li>
+          <li>Автозаповнення Prom.ua</li>
+          <li>Автозаповнення Rozetka</li>
+          <li>Instagram + Facebook + TikTok</li>
+        </ul>
+        <a href="#install" class="plan-btn">Почати безкоштовно</a>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">PRO (свій API ключ)</div>
+        <div class="plan-price"><sup>$</sup>0.04<sub>/картка</sub></div>
+        <div class="plan-uah">≈ 1.5 грн/картка</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Всі платформи</li>
+          <li>Власний промпт</li>
+          <li>Свій Anthropic ключ</li>
+          <li>Мінімальна сервісна комісія</li>
+        </ul>
+        <a href="#install" class="plan-btn">Для профі</a>
+      </div>
+    </div>
+
+    <p style="margin-top:24px;font-size:12px;color:var(--muted)">✨ 3 картки безкоштовно на старті — без картки, без підписки</p>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<section class="fade-in">
+  <div class="section-label">Порівняння</div>
+  <h2>Vorta vs <span>конкуренти</span></h2>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Функція</th>
+        <th class="highlight-col">Vorta UA</th>
+        <th>Kartka AI</th>
+        <th>Вручну</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Ціна за картку</td><td class="highlight-col">≈ 3–6 грн</td><td>≈ 4–8 грн</td><td>безкоштовно</td></tr>
+      <tr><td>Час на картку</td><td class="highlight-col">10 секунд</td><td>30 секунд</td><td>15–30 хвилин</td></tr>
+      <tr><td>Автозаповнення форми</td><td class="highlight-col"><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">×</span></td></tr>
+      <tr><td>Характеристики + габарити</td><td class="highlight-col"><span class="check">✓</span></td><td><span class="cross">×</span></td><td>вручну</td></tr>
+      <tr><td>Пости для соцмереж</td><td class="highlight-col"><span class="check">✓</span></td><td><span class="cross">×</span></td><td><span class="cross">×</span></td></tr>
+      <tr><td>SEO + META теги</td><td class="highlight-col"><span class="check">✓</span></td><td>частково</td><td>вручну</td></tr>
+      <tr><td>Знижка за реферал</td><td class="highlight-col">-30% постійно</td><td><span class="cross">×</span></td><td>—</td></tr>
+      <tr><td>PRO зі своїм API ключем</td><td class="highlight-col"><span class="check">✓</span></td><td><span class="check">✓</span></td><td>—</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- REFERRAL -->
+<div class="referral-section" id="referral">
+  <div class="referral-inner fade-in">
+    <div class="section-label">Реферальна програма</div>
+    <h2>Поділись — і плати <span>на 30% менше</span></h2>
+    <div class="referral-card">
+      <div class="referral-percent">-30%</div>
+      <div class="referral-sub">на всі картки, поки твій пост живий</div>
+      <p class="referral-desc">Зроби пост про Vorta в Instagram, Facebook або TikTok з реферальним посиланням — і отримуй постійну знижку 30% на кожну згенеровану картку.</p>
+      <div class="referral-platforms">
+        <div class="platform-pill">📸 Instagram</div>
+        <div class="platform-pill">👤 Facebook</div>
+        <div class="platform-pill">🎵 TikTok</div>
+      </div>
+    </div>
+    <div class="how-works">
+      <div class="hw-step"><div class="hw-num">01</div><div class="hw-text"><strong>Реєструйся</strong> у Vorta та отримай особисте реферальне посилання</div></div>
+      <div class="hw-step"><div class="hw-num">02</div><div class="hw-text"><strong>Зроби пост</strong> в Instagram, Facebook або TikTok з посиланням</div></div>
+      <div class="hw-step"><div class="hw-num">03</div><div class="hw-text"><strong>Вставте URL</strong> поста в кабінеті — знижка активується автоматично</div></div>
+      <div class="hw-step"><div class="hw-num">04</div><div class="hw-text"><strong>-30% постійно</strong> поки пост активний. Видалив пост — знижка зникає.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<section id="faq" class="fade-in">
+  <div class="section-label">FAQ</div>
+  <h2>Часті <span>запитання</span></h2>
+  <div class="faq-list">
+    <div class="faq-item"><div class="faq-q">Скільки коштує одна картка? <span class="faq-arrow">▼</span></div><div class="faq-a">Від 3 грн (~$0.08) для Prom.ua до 6 грн (~$0.15) для обох платформ + соцмережі. Ціна залежить від обраного тарифу.</div></div>
+    <div class="faq-item"><div class="faq-q">Чи є безкоштовний пробний період? <span class="faq-arrow">▼</span></div><div class="faq-a">Так — 3 картки безкоштовно одразу після реєстрації. Без прив'язки картки.</div></div>
+    <div class="faq-item"><div class="faq-q">Як працює автозаповнення Prom.ua? <span class="faq-arrow">▼</span></div><div class="faq-a">Натискаєш кнопку «Автозаповнити» — Vorta відкриває форму додавання товару на Prom.ua і автоматично заповнює всі доступні поля: назву, опис, ціну, артикул, SEO.</div></div>
+    <div class="faq-item"><div class="faq-q">Якою мовою генерується контент? <span class="faq-arrow">▼</span></div><div class="faq-a">Весь контент генерується українською мовою. Бренди, моделі та технічні назви залишаються в оригіналі.</div></div>
+    <div class="faq-item"><div class="faq-q">Що таке PRO тариф зі своїм API ключем? <span class="faq-arrow">▼</span></div><div class="faq-a">Ти підключаєш власний Anthropic API ключ — ми беремо мінімальну сервісну комісію $0.04/картка. Ідеально для тих хто генерує 200+ карток на місяць.</div></div>
+    <div class="faq-item"><div class="faq-q">Як довго діє реферальна знижка? <span class="faq-arrow">▼</span></div><div class="faq-a">Постійно поки твій пост активний у соцмережах. Видалив пост — знижка автоматично скасовується. Відновив — знижка повертається.</div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section" id="install">
+  <div class="cta-inner fade-in">
+    <div class="section-label">Старт безкоштовно</div>
+    <h2>Запусти <span>вихор продажів</span> вже сьогодні</h2>
+    <p>3 картки безкоштовно. Без підписки. Без картки. Встановлюється за 1 хвилину.</p>
+    <a href="https://chromewebstore.google.com" class="btn-primary" style="display:inline-flex">
+      🌀 Встановити Vorta UA у Chrome
+    </a>
+    <p style="margin-top:16px;font-size:12px;color:var(--muted)">Доступно для Chrome · Безкоштовно · Працює на всіх ОС</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">VORT<span>A</span> 🇺🇦</div>
+  <div class="footer-links">
+    <a href="#">Умови використання</a>
+    <a href="#">Конфіденційність</a>
+    <a href="#">Повернення коштів</a>
+    <a href="https://t.me/vorta_ua">Telegram</a>
+  </div>
+  <div style="font-size:12px;color:var(--muted)">Vorta UA не пов'язаний з Prom.ua чи Rozetka. © 2025</div>
+</footer>
+
+<script>
+// Fade in on scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// FAQ toggle
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => {
+    const item = q.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+</script>
+</body>
+</html>

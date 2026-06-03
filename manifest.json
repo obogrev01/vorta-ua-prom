@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "Vorta UA — Картки для Prom та Rozetka",
+  "version": "1.0.0",
+  "description": "AI генерує картки товарів українською для Prom.ua та Rozetka з Amazon, AliExpress, eBay. Назва, опис, SEO-теги + пости для соцмереж.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "clipboardWrite",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://my.prom.ua/cms/product/*",
+        "https://my.prom.ua/cabinet/product/*"
+      ],
+      "js": [
+        "autofill.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

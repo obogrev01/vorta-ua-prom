@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Vorta UA</title>
+  <style>
+    :root {
+      --bg:#080B10; --s1:#0F1318; --s2:#161C24; --s3:#1E2530;
+      --border:#252D3A; --border2:#2E3845;
+      --acc:#00D4FF; --gold:#FFB547; --green:#00E5A0; --red:#FF4D6A;
+      --text:#E8EDF5; --muted:#6B7A8F; --muted2:#4A5568; --r:10px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { width:440px; background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; font-size:13px; max-height:640px; overflow-y:auto; overflow-x:hidden; }
+    ::-webkit-scrollbar { width:3px; }
+    ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+
+    /* HEADER */
+    .header { background:var(--s1); border-bottom:1px solid var(--border); padding:11px 16px; display:flex; align-items:center; justify-content:space-between; }
+    .brand { display:flex; align-items:center; gap:10px; }
+    .brand-mark { width:30px; height:30px; background:var(--acc); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; }
+    .brand-name { font-weight:800; font-size:15px; letter-spacing:2px; font-family:'Segoe UI',sans-serif; }
+    .brand-name span { color:var(--acc); }
+    .brand-sub { font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-top:1px; }
+    .ua-flag { font-size:14px; }
+
+    /* AUTH */
+    .auth-panel { padding:20px 16px; background:var(--s1); border-bottom:1px solid var(--border); }
+    .auth-title { font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .auth-title::after { content:''; flex:1; height:1px; background:var(--border); }
+    .form-group { margin-bottom:10px; }
+    .field-label { font-size:11px; color:var(--muted); margin-bottom:5px; display:block; }
+    .field-input { width:100%; background:var(--s2); border:1px solid var(--border); border-radius:var(--r); padding:10px 12px; color:var(--text); font-family:'Segoe UI',sans-serif; font-size:13px; outline:none; transition:border-color .15s; }
+    .field-input:focus { border-color:var(--acc); }
+    .field-input::placeholder { color:var(--muted2); }
+    .field-input.mono { font-family:monospace; font-size:12px; }
+    .auth-btn { width:100%; background:var(--acc); border:none; color:var(--bg); padding:11px; border-radius:var(--r); cursor:pointer; font-family:'Segoe UI',sans-serif; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; transition:all .2s; margin-top:4px; }
+    .auth-btn:hover { background:#1AE0FF; }
+    .auth-switch { text-align:center; margin-top:12px; font-size:12px; color:var(--muted); }
+    .auth-switch a { color:var(--acc); cursor:pointer; text-decoration:none; }
+    .auth-error { display:none; background:rgba(255,77,106,.08); border:1px solid rgba(255,77,106,.25); border-radius:8px; padding:9px 12px; font-size:12px; color:#FF8FA3; margin-bottom:10px; line-height:1.5; }
+    .free-badge { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:12px; background:rgba(0,229,160,.06); border:1px solid rgba(0,229,160,.2); border-radius:20px; padding:6px 14px; font-size:11px; color:var(--green); }
+
+    /* USER STRIP */
+    .user-strip { display:none; background:var(--s1); border-bottom:1px solid var(--border); padding:10px 16px; align-items:center; gap:10px; }
+    .user-avatar { width:28px; height:28px; background:linear-gradient(135deg,var(--acc),#0066AA); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--bg); flex-shrink:0; }
+    .user-info { flex:1; min-width:0; }
+    .user-email { font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-plan { font-size:10px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+    .credits-badge { font-size:11px; white-space:nowrap; text-align:right; }
+    .credits-badge .count { font-size:14px; font-weight:700; color:var(--acc); }
+    .credits-badge .label { font-size:10px; color:var(--muted); display:block; }
+    .logout-btn { background:none; border:1px solid var(--border); color:var(--muted); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-family:'Segoe UI',sans-serif; transition:all .15s; flex-shrink:0; }
+    .logout-btn:hover { border-color:var(--red); color:var(--red); }
+
+    /* PAGE STRIP */
+    .page-strip { background:var(--s1); border-bottom:1px solid var(--border); padding:9px 16px; display:flex; align-items:center; gap:10px; }
+    .page-icon { width:26px; height:26px; border-radius:6px; background:var(--s3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+    .page-meta { flex:1; min-width:0; }
+    .page-domain { font-size:11px; color:var(--muted); }
+    .page-preview { font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .source-badge { font-size:9px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; padding:3px 7px; border-radius:20px; flex-shrink:0; }
+    .badge-amazon { background:rgba(255,181,71,.12); border:1px solid rgba(255,181,71,.3); color:var(--gold); }
+    .badge-ali { background:rgba(255,107,53,.12); border:1px solid rgba(255,107,53,.3); color:#FF9A5C; }
+    .badge-ebay { background:rgba(0,212,255,.1); border:1px solid rgba(0,212,255,.25); color:var(--acc); }
+    .badge-other { background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--muted); }
+
+    /* MODE TABS */
+    .mode-tabs { display:flex; background:var(--s1); border-bottom:1px solid var(--border); }
+    .mode-tab { flex:1; padding:10px 6px; background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); font-family:'Segoe UI',sans-serif; font-size:11px; font-weight:500; cursor:pointer; text-align:center; text-transform:uppercase; letter-spacing:.3px; transition:all .15s; }
+    .mode-tab:hover { color:var(--text); }
+    .mode-tab.active { color:var(--acc); border-bottom-color:var(--acc); }
+
+    /* TARGET TABS */
+    .target-tabs { display:flex; padding:10px 16px; gap:8px; background:var(--s1); border-bottom:1px solid var(--border); }
+    .target-tab { flex:1; padding:7px 4px; background:var(--s2); border:1px solid var(--border); border-radius:8px; cursor:pointer; font-family:'Segoe UI',sans-serif; font-size:11px; font-weight:500; color:var(--muted); text-align:center; transition:all .15s; }
+    .target-tab:hover { border-color:var(--border2); color:var(--text); }
+    .target-tab.active { border-color:var(--acc); color:var(--acc); background:rgba(0,212,255,.06); }
+    .target-tab .price-tag { display:block; font-size:9px; color:var(--muted2); margin-top:2px; }
+    .target-tab.active .price-tag { color:rgba(0,212,255,.6); }
+
+    /* GEN ZONE */
+    .gen-zone { padding:14px 16px; background:var(--s1); border-bottom:1px solid var(--border); }
+    .gen-btn { width:100%; background:var(--acc); border:none; color:var(--bg); padding:13px; border-radius:var(--r); cursor:pointer; font-family:'Segoe UI',sans-serif; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .gen-btn:hover:not(:disabled) { background:#1AE0FF; box-shadow:0 0 25px rgba(0,212,255,.3); transform:translateY(-1px); }
+    .gen-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+    .spin { display:none; width:14px; height:14px; border:2px solid rgba(0,0,0,.2); border-top-color:var(--bg); border-radius:50%; animation:spin .6s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .cost-hint { text-align:center; margin-top:8px; font-size:11px; color:var(--muted); }
+    .cost-hint strong { color:var(--gold); }
+    .error-strip { display:none; margin-top:10px; background:rgba(255,77,106,.08); border:1px solid rgba(255,77,106,.25); border-radius:var(--r); padding:10px 12px; font-size:12px; color:#FF8FA3; line-height:1.5; }
+
+    /* NO CREDITS */
+    .no-credits { display:none; margin-top:10px; background:rgba(255,181,71,.07); border:1px solid rgba(255,181,71,.25); border-radius:var(--r); padding:12px; text-align:center; }
+    .no-credits p { font-size:12px; color:var(--gold); margin-bottom:8px; }
+    .buy-btn { display:inline-block; background:var(--gold); color:var(--bg); padding:7px 16px; border-radius:6px; font-size:11px; font-weight:700; text-decoration:none; cursor:pointer; border:none; font-family:'Segoe UI',sans-serif; }
+
+    /* RESULTS */
+    .results { display:none; }
+    .panel-head { padding:12px 16px 0; display:flex; align-items:center; justify-content:space-between; }
+    .panel-label { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; }
+    .copy-all { background:none; border:1px solid var(--border); color:var(--muted); font-size:10px; padding:4px 10px; border-radius:20px; cursor:pointer; transition:all .15s; font-family:'Segoe UI',sans-serif; }
+    .copy-all:hover { border-color:var(--acc); color:var(--acc); }
+    .cards { padding:10px 16px; display:flex; flex-direction:column; gap:8px; }
+    .card { background:var(--s2); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; }
+    .card:hover { border-color:var(--border2); }
+    .card-head { padding:8px 12px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:rgba(255,255,255,.015); }
+    .card-label { font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; display:flex; align-items:center; gap:5px; }
+    .dot { width:5px; height:5px; border-radius:50%; background:var(--acc); }
+    .dot.gold { background:var(--gold); }
+    .dot.green { background:var(--green); }
+    .copy-btn { background:none; border:1px solid var(--border); color:var(--muted); font-size:10px; padding:2px 8px; border-radius:5px; cursor:pointer; transition:all .15s; font-family:'Segoe UI',sans-serif; }
+    .copy-btn:hover { border-color:var(--acc); color:var(--acc); }
+    .copy-btn.copied { border-color:var(--green); color:var(--green); }
+    .card-body { padding:11px 12px; font-size:12px; line-height:1.65; color:var(--text); white-space:pre-wrap; word-break:break-word; }
+    .char-line { padding:3px 12px 8px; font-size:10px; color:var(--muted2); text-align:right; }
+    .char-line.warn { color:var(--gold); }
+    .bullets-list { padding:10px 12px; display:flex; flex-direction:column; gap:5px; }
+    .bullet-item { display:flex; align-items:flex-start; gap:8px; font-size:12px; line-height:1.5; color:var(--text); }
+    .bullet-dot { width:4px; height:4px; border-radius:50%; background:var(--acc); margin-top:6px; flex-shrink:0; }
+    .tags-wrap { padding:10px 12px; display:flex; flex-wrap:wrap; gap:5px; }
+    .tag { background:rgba(0,212,255,.07); border:1px solid rgba(0,212,255,.2); color:#7DE8FF; padding:3px 9px; border-radius:20px; font-size:11px; cursor:pointer; transition:all .12s; }
+    .tag:hover { background:rgba(0,212,255,.15); }
+
+    /* PRICING */
+    .pricing-section { display:none; padding:16px; background:var(--s1); border-bottom:1px solid var(--border); }
+    .pricing-title { font-size:12px; font-weight:700; color:var(--text); margin-bottom:12px; text-align:center; }
+    .plans-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; }
+    .plan-card { background:var(--s2); border:1px solid var(--border); border-radius:var(--r); padding:10px 8px; text-align:center; cursor:pointer; transition:all .15s; }
+    .plan-card:hover { border-color:var(--acc); }
+    .plan-card.recommended { border-color:var(--acc); background:rgba(0,212,255,.05); }
+    .plan-name { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+    .plan-price { font-size:18px; font-weight:800; color:var(--text); margin:4px 0; }
+    .plan-price sup { font-size:11px; color:var(--muted); }
+    .plan-per { font-size:10px; color:var(--muted); }
+    .plan-uah { font-size:10px; color:var(--green); margin-top:2px; }
+    .plan-features { margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6; text-align:left; }
+    .plan-features span { display:block; }
+    .plan-features .yes { color:var(--green); }
+    .plan-features .no { color:var(--muted2); }
+    .buy-credits-btn { width:100%; background:var(--acc); border:none; color:var(--bg); padding:10px; border-radius:var(--r); cursor:pointer; font-size:12px; font-weight:700; font-family:'Segoe UI',sans-serif; transition:all .2s; }
+    .buy-credits-btn:hover { background:#1AE0FF; }
+
+    /* SITES STRIP */
+    .sites-strip { background:var(--s2); border-bottom:1px solid var(--border); padding:8px 16px; display:none; }
+    .sites-label { font-size:10px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+    .sites-list { display:flex; flex-wrap:wrap; gap:4px; }
+    .site-tag { background:var(--s3); border:1px solid var(--border); color:var(--muted); font-size:10px; padding:2px 7px; border-radius:20px; }
+    .site-tag.all-sites { border-color:rgba(0,212,255,.3); color:var(--acc); background:rgba(0,212,255,.05); }
+
+    /* INLINE FIELDS */
+    .inline-fields { padding:8px 12px; display:flex; flex-direction:column; gap:1px; }
+    .inline-field { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); }
+    .inline-field:last-child { border-bottom:none; }
+    .ifl { font-size:11px; color:var(--muted); min-width:110px; flex-shrink:0; }
+    .ifv { font-size:12px; color:var(--text); flex:1; }
+
+    /* CHARS LIST */
+    .chars-list { padding:8px 12px; display:flex; flex-direction:column; gap:2px; }
+    .char-row { display:flex; gap:8px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:11px; }
+    .char-row:last-child { border-bottom:none; }
+    .char-key { color:var(--muted); min-width:120px; flex-shrink:0; }
+    .char-val { color:var(--text); flex:1; }
+
+    /* AUTOFILL BUTTON */
+    .autofill-btn {
+      width:100%; background:linear-gradient(135deg,#FF6B35,#FF9A5C);
+      border:none; color:white; padding:11px; border-radius:var(--r);
+      cursor:pointer; font-family:"Segoe UI",sans-serif; font-size:12px;
+      font-weight:700; letter-spacing:.5px; transition:all .2s;
+    }
+    .autofill-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(255,107,53,.4); }
+    .autofill-hint { font-size:10px; color:var(--muted); text-align:center; margin-top:5px; margin-bottom:2px; }
+
+    /* FOOTER */
+    .footer { padding:10px 16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .footer-brand { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--muted2); }
+    .footer-brand span { color:var(--acc); }
+    .footer-link { font-size:10px; color:var(--muted2); cursor:pointer; text-decoration:none; }
+    .footer-link:hover { color:var(--acc); }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-mark">🛒</div>
+      <div>
+        <div class="brand-name">VORT<span>A</span> <span class="ua-flag">🇺🇦</span></div>
+        <div class="brand-sub">Prom · Rozetka · AI · v1.0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH PANEL -->
+  <div class="auth-panel" id="authPanel">
+    <!-- Login -->
+    <div id="loginForm">
+      <div class="auth-title">Вхід</div>
+      <div class="auth-error" id="authError"></div>
+      <div class="form-group">
+        <label class="field-label">Email</label>
+        <input type="email" class="field-input" id="loginEmail" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Пароль</label>
+        <input type="password" class="field-input" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="auth-btn" id="loginBtn">УВІЙТИ</button>
+      <div class="auth-switch">Немає акаунту? <a id="switchToRegister">Створити →</a></div>
+    </div>
+    <!-- Register -->
+    <div id="registerForm" style="display:none">
+      <div class="auth-title">Реєстрація</div>
+      <div class="auth-error" id="authErrorReg"></div>
+      <div class="form-group">
+        <label class="field-label">Email</label>
+        <input type="email" class="field-input" id="regEmail" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Пароль (мін. 8 символів)</label>
+        <input type="password" class="field-input" id="regPass" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <button class="auth-btn" id="registerBtn">ЗАРЕЄСТРУВАТИСЬ</button>
+      <div class="auth-switch">Вже є акаунт? <a id="switchToLogin">Увійти →</a></div>
+      <div class="free-badge">✨ 3 картки безкоштовно на старті</div>
+    </div>
+    <!-- Admin mode -->
+    <div id="adminForm" style="display:none">
+      <div class="auth-title">Admin · Test Mode</div>
+      <div class="auth-error" id="authErrorAdmin"></div>
+      <div class="form-group">
+        <label class="field-label">Anthropic API Key</label>
+        <input type="text" class="field-input mono" id="adminKey" placeholder="sk-ant-api03-..." autocomplete="off">
+      </div>
+      <button class="auth-btn" id="adminBtn">▶ УВІЙТИ ЯК АДМІН</button>
+      <div class="auth-switch"><a id="switchToLogin2">← Назад до входу</a></div>
+    </div>
+
+    <div style="text-align:center;margin-top:10px;padding-bottom:4px">
+      <button id="showAdmin" type="button" style="background:none;border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--muted);cursor:pointer;padding:5px 14px;font-family:inherit;display:inline-block">🔧 Режим розробника</button>
+    </div>
+  </div>
+
+  <!-- USER STRIP -->
+  <div class="user-strip" id="userStrip">
+    <div class="user-avatar" id="userAvatar">V</div>
+    <div class="user-info">
+      <div class="user-email" id="userEmail"></div>
+      <div class="user-plan" id="userPlan">FREE</div>
+    </div>
+    <div class="credits-badge" id="creditsBadge">
+      <span class="count" id="creditsCount">3</span>
+      <span class="label">карток</span>
+    </div>
+    <button class="logout-btn" id="logoutBtn">Вийти</button>
+  </div>
+
+  <!-- PAGE STRIP -->
+  <div class="page-strip" id="pageStrip" style="display:none">
+    <div class="page-icon" id="pageIcon">🌐</div>
+    <div class="page-meta">
+      <div class="page-domain" id="pageDomain"></div>
+      <div class="page-preview" id="pagePreview">Відкрий сторінку товару</div>
+    </div>
+    <div class="source-badge badge-other" id="sourceBadge" style="display:none"></div>
+  </div>
+
+  <!-- SUPPORTED SITES -->
+  <div class="sites-strip" id="sitesStrip" style="display:none">
+    <div class="sites-label">Підтримувані джерела:</div>
+    <div class="sites-list">
+      <span class="site-tag">Amazon</span>
+      <span class="site-tag">AliExpress</span>
+      <span class="site-tag">eBay</span>
+      <span class="site-tag">Temu</span>
+      <span class="site-tag">Allegro</span>
+      <span class="site-tag">OLX</span>
+      <span class="site-tag">Rozetka</span>
+      <span class="site-tag">Prom.ua</span>
+      <span class="site-tag">Kasta</span>
+      <span class="site-tag">Shafa</span>
+      <span class="site-tag">Epicentr</span>
+      <span class="site-tag">Allo</span>
+      <span class="site-tag all-sites">+ будь-який сайт 🌐</span>
+    </div>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="mode-tabs" id="modeTabs" style="display:none">
+    <button class="mode-tab active" data-mode="listing">📋 Картка</button>
+    <button class="mode-tab" data-mode="social">📱 Соцмережі</button>
+    <button class="mode-tab" data-mode="both">⚡ Все разом</button>
+  </div>
+
+  <!-- TARGET PLATFORM -->
+  <div class="target-tabs" id="targetTabs" style="display:none">
+    <div class="target-tab active" data-target="prom">
+      🟠 Prom.ua
+      <span class="price-tag">≈ 4 грн/картка</span>
+    </div>
+    <div class="target-tab" data-target="rozetka">
+      🟢 Rozetka
+      <span class="price-tag">≈ 6 грн/картка</span>
+    </div>
+    <div class="target-tab" data-target="both">
+      ✨ Обидві
+      <span class="price-tag">≈ 8 грн/картка</span>
+    </div>
+  </div>
+
+  <!-- GENERATE -->
+  <div class="gen-zone" id="genZone" style="display:none">
+    <button class="gen-btn" id="genBtn">
+      <div class="spin" id="spin"></div>
+      <span id="btnLabel">ЗГЕНЕРУВАТИ КАРТКУ</span>
+    </button>
+    <div class="cost-hint" id="costHint">Буде списано <strong>1 кредит</strong> (~4 грн)</div>
+    <div class="error-strip" id="errorBox"></div>
+    <div class="no-credits" id="noCredits">
+      <p>🔒 Кредити закінчились. Поповніть баланс.</p>
+      <button class="buy-btn" id="buyBtn">Придбати кредити →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS: LISTING -->
+  <div class="results" id="listingResults">
+    <div class="panel-head">
+      <div class="panel-label">📋 Картка товару</div>
+      <button class="copy-all" id="copyListing">Копіювати все</button>
+    </div>
+    <!-- Кнопка автозаповнення -->
+    <div style="padding:10px 16px 0">
+      <button class="autofill-btn" id="autofillBtn">⚡ Автозаповнити форму Prom.ua</button>
+      <div class="autofill-hint">Відкрий форму додавання товару на Prom.ua → натисни цю кнопку</div>
+    </div>
+    <div class="cards">
+      <!-- Назва -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot"></span>Назва товару</div><button class="copy-btn" data-copy="titleOut">Копіювати</button></div>
+        <div class="card-body" id="titleOut"></div>
+        <div class="char-line" id="titleCount"></div>
+      </div>
+      <!-- Опис -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot gold"></span>Опис товару</div><button class="copy-btn" data-copy="descOut">Копіювати</button></div>
+        <div class="card-body" id="descOut"></div>
+        <div class="char-line" id="descCount"></div>
+      </div>
+      <!-- Ціна + артикул -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot green"></span>Ціна та артикул</div></div>
+        <div class="inline-fields">
+          <div class="inline-field"><span class="ifl">💰 Ціна</span><span class="ifv" id="priceOut">—</span><button class="copy-btn" data-copy="priceOut">Копіювати</button></div>
+          <div class="inline-field"><span class="ifl">🔖 Артикул</span><span class="ifv" id="articleOut">—</span><button class="copy-btn" data-copy="articleOut">Копіювати</button></div>
+          <div class="inline-field"><span class="ifl">🏷️ Бренд</span><span class="ifv" id="brandOut">—</span><button class="copy-btn" data-copy="brandOut">Копіювати</button></div>
+          <div class="inline-field"><span class="ifl">🌍 Країна</span><span class="ifv" id="countryOut">—</span><button class="copy-btn" data-copy="countryOut">Копіювати</button></div>
+        </div>
+      </div>
+      <!-- Категорія -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot"></span>Категорія</div><button class="copy-btn" data-copy="categoryOut">Копіювати</button></div>
+        <div class="card-body" id="categoryOut"></div>
+      </div>
+      <!-- Характеристики -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot gold"></span>Характеристики</div><button class="copy-btn" id="copyChars">Копіювати</button></div>
+        <div class="chars-list" id="charsOut"></div>
+      </div>
+      <!-- Габарити -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot green"></span>Габарити та вага</div></div>
+        <div class="inline-fields">
+          <div class="inline-field"><span class="ifl">↔️ Ширина, см</span><span class="ifv" id="dimWidth">—</span></div>
+          <div class="inline-field"><span class="ifl">↕️ Висота, см</span><span class="ifv" id="dimHeight">—</span></div>
+          <div class="inline-field"><span class="ifl">↩️ Довжина, см</span><span class="ifv" id="dimLength">—</span></div>
+          <div class="inline-field"><span class="ifl">⚖️ Вага, кг</span><span class="ifv" id="dimWeight">—</span></div>
+        </div>
+      </div>
+      <!-- Комплектація -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot"></span>Комплектація</div><button class="copy-btn" data-copy="packageOut">Копіювати</button></div>
+        <div class="card-body" id="packageOut"></div>
+      </div>
+      <!-- SEO -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot gold"></span>SEO заголовок</div><button class="copy-btn" data-copy="seoTitleOut">Копіювати</button></div>
+        <div class="card-body" id="seoTitleOut"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot"></span>META description</div><button class="copy-btn" data-copy="seoDescOut">Копіювати</button></div>
+        <div class="card-body" id="seoDescOut"></div>
+      </div>
+      <!-- SEO теги -->
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot green"></span>SEO-теги / Ключові слова</div><button class="copy-btn" data-copy-tags="seoTags">Копіювати</button></div>
+        <div class="tags-wrap" id="seoTags"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS: SOCIAL -->
+  <div class="results" id="socialResults">
+    <div class="panel-head">
+      <div class="panel-label">📱 Соцмережі</div>
+      <button class="copy-all" id="copySocial">Копіювати все</button>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span>📸</span> Instagram</div><button class="copy-btn" data-copy="igOut">Копіювати</button></div>
+        <div class="card-body" id="igOut"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span>👤</span> Facebook</div><button class="copy-btn" data-copy="fbOut">Копіювати</button></div>
+        <div class="card-body" id="fbOut"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span>🎵</span> TikTok</div><button class="copy-btn" data-copy="ttOut">Копіювати</button></div>
+        <div class="card-body" id="ttOut"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-label"><span class="dot green"></span>Хештеги</div><button class="copy-btn" data-copy-tags="hashtagsOut">Копіювати</button></div>
+        <div class="tags-wrap" id="hashtagsOut"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-brand">VORT<span>A</span> 🇺🇦</div>
+    <a class="footer-link" id="pricingLink">Тарифи →</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
