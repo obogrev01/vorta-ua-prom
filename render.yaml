@@ -3,6 +3,7 @@ services:
     name: vorta-ua-api
     runtime: node
     plan: free
+    region: frankfurt
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
@@ -28,4 +29,5 @@ services:
 databases:
   - name: vorta-ua-db
     plan: free
+    region: frankfurt
     databaseName: vorta_ua
