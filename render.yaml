@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: vorta-ua-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vorta-ua-db
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: STAFF_PASSWORD_OBOGREV14
+        sync: false
+      - key: STAFF_PASSWORD_OBOGREV09
+        sync: false
+      - key: STAFF_PASSWORD_OBOGREV03
+        sync: false
+      - key: STAFF_PASSWORD_OBOGREV06
+        sync: false
+
+databases:
+  - name: vorta-ua-db
+    plan: free
+    databaseName: vorta_ua
